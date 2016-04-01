@@ -10,13 +10,14 @@ object TdmsReader {
   def main(args: Array[String]): Unit = {
     System.loadLibrary("tdms")
 
-    val fileName = getListOfFiles(args(0)).head.getAbsolutePath
-
-    convTdms2Json(fileName, isVerbose = false)
-
+    getListOfFiles(args(0)).foreach { f =>
+      val path = f.getPath
+      println("Processed file: " + path + "...")
+      convTdms2Json(path, replaceToJsonExt(path))
+    }
   }
 
-  def convTdms2Json(fileName: String, isVerbose: Boolean = false): Unit = {
+  def convTdms2Json(fileName: String, outFile: String, isVerbose: Boolean = false): Unit = {
 
     import org.json4s.JsonDSL._
     import org.json4s.native.Serialization
@@ -31,7 +32,7 @@ object TdmsReader {
     parser.read(isVerbose)
 
     implicit val formats = Serialization.formats(NoTypeHints)
-    val output = new java.io.BufferedWriter(new java.io.FileWriter(new java.io.File("/tmp/test.json")))
+    val output = new java.io.BufferedWriter(new java.io.FileWriter(new java.io.File(outFile)))
 
     val res = getTdmsGroups(parser).foreach { g =>
       getTdmsChannels(g).foreach { c =>
@@ -60,7 +61,6 @@ object TdmsReader {
 
   def getTdmsDataVector(channel: TdmsChannel): List[Double] = {
     val data = channel.getDataVector
-    printf("Processed channel: %s\n", channel.getName)
     for (i <- (0 until (data.size - 1).toInt).toList) yield data.get(i)
   }
 
@@ -71,5 +71,9 @@ object TdmsReader {
     } else {
       List[File]()
     }
+  }
+
+  def replaceToJsonExt(path: String): String = {
+    path.replaceAll("\\.[^.]*$", ".json")
   }
 }
