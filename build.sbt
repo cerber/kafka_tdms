@@ -8,7 +8,7 @@ unmanagedBase := baseDirectory.value / "libs"
 
 unmanagedJars in Compile := (baseDirectory.value  ** "*.jar").classpath
 
-javaOptions in run += "-Djava.library.path=libs:lib/native/linux"
+javaOptions in run += "-Xmx4G -Djava.library.path=./libs:lib/native/linux"
 
 ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 
