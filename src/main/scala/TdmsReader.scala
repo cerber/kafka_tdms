@@ -19,41 +19,26 @@ object TdmsReader {
 
   def convTdms2Json(fileName: String, outFile: String, isVerbose: Boolean = false): Unit = {
 
+    import org.json4s._
     import org.json4s.JsonDSL._
-    import org.json4s.native.Serialization
-    import org.json4s.native.Serialization.{write, writePretty}
-    import org.json4s.NoTypeHints
+    import org.json4s.jackson.JsonMethods._
+//    import org.json4s.native.Serialization
+//    import org.json4s.native.Serialization.{write, writePretty}
+//    import org.json4s.NoTypeHints
 
     val parser = new TdmsParser(fileName)
-    if(parser.fileOpeningError == 1) {
-      return
-    }
+    if(parser.fileOpeningError == 1) return
 
     parser.read(isVerbose)
 
-    implicit val formats = Serialization.formats(NoTypeHints)
+//    implicit val formats = Serialization.formats(NoTypeHints)
     val output = new java.io.BufferedWriter(new java.io.FileWriter(new java.io.File(outFile)))
 
-//    val res = getTdmsGroups(parser).foreach { g =>
-//      getTdmsChannels(g).foreach { c =>
-//        val json =
-//        "group" ->
-//          ("name" -> g.getName) ~
-//            ("channels" ->
-//              ("name" -> c.getName) ~
-//                ("unit" -> c.getUnit) ~
-//                ("dataType" -> c.getDataType) ~
-//                ("data" -> getTdmsDataVector(c)))
-//        write(json, output)
-//      }
-//    }
-
     val res = getTdmsGroups(parser).map { g =>
-        printf("Processing group %s\n", g.getName)
         "group" ->
           ("name" -> g.getName) ~
             ("channels" -> getTdmsChannels(g).map { c =>
-              printf("Processing channel %s\n", c.getName)
+              if (isVerbose) printf("Processing channel %s\n", c.getName)
               "channels" ->
                 ("name" -> c.getName) ~
                   ("unit" -> c.getUnit) ~
@@ -62,7 +47,7 @@ object TdmsReader {
             })
     }
 
-    writePretty(res, output)
+    output.write(compact(render(res)))
     output.flush
     output.close
   }
