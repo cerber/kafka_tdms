@@ -13,7 +13,7 @@ object TdmsReader {
     getListOfFiles(args(0)).foreach { f =>
       val path = f.getPath
       println("Processed file: " + path + "...")
-      convTdms2Json(path, replaceToJsonExt(path))
+      convTdms2Json(path, replaceToJsonExt(path), true)
     }
   }
 
@@ -39,7 +39,6 @@ object TdmsReader {
           ("name" -> g.getName) ~
             ("channels" -> getTdmsChannels(g).map { c =>
               if (isVerbose) printf("Processing channel %s\n", c.getName)
-              "channels" ->
                 ("name" -> c.getName) ~
                   ("unit" -> c.getUnit) ~
                   ("dataType" -> c.getDataType) ~
@@ -47,7 +46,8 @@ object TdmsReader {
             })
     }
 
-    output.write(compact(render(res)))
+    if (isVerbose) println("Transfer completed.\nSaving...")
+    output.write(pretty(render(res)))
     output.flush
     output.close
   }
