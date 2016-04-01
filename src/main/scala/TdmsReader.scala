@@ -21,7 +21,7 @@ object TdmsReader {
 
     import org.json4s.JsonDSL._
     import org.json4s.native.Serialization
-    import org.json4s.native.Serialization.write
+    import org.json4s.native.Serialization.{write, writePretty}
     import org.json4s.NoTypeHints
 
     val parser = new TdmsParser(fileName)
@@ -34,19 +34,35 @@ object TdmsReader {
     implicit val formats = Serialization.formats(NoTypeHints)
     val output = new java.io.BufferedWriter(new java.io.FileWriter(new java.io.File(outFile)))
 
-    val res = getTdmsGroups(parser).foreach { g =>
-      getTdmsChannels(g).foreach { c =>
-        val json =
+//    val res = getTdmsGroups(parser).foreach { g =>
+//      getTdmsChannels(g).foreach { c =>
+//        val json =
+//        "group" ->
+//          ("name" -> g.getName) ~
+//            ("channels" ->
+//              ("name" -> c.getName) ~
+//                ("unit" -> c.getUnit) ~
+//                ("dataType" -> c.getDataType) ~
+//                ("data" -> getTdmsDataVector(c)))
+//        write(json, output)
+//      }
+//    }
+
+    val res = getTdmsGroups(parser).map { g =>
+        printf("Processing group %s\n", g.getName)
         "group" ->
           ("name" -> g.getName) ~
-            ("channels" ->
-              ("name" -> c.getName) ~
-                ("unit" -> c.getUnit) ~
-                ("dataType" -> c.getDataType) ~
-                ("data" -> getTdmsDataVector(c)))
-        write(json, output)
-      }
+            ("channels" -> getTdmsChannels(g).map { c =>
+              printf("Processing channel %s\n", c.getName)
+              "channels" ->
+                ("name" -> c.getName) ~
+                  ("unit" -> c.getUnit) ~
+                  ("dataType" -> c.getDataType) ~
+                  ("data" -> getTdmsDataVector(c))
+            })
     }
+
+    writePretty(res, output)
     output.flush
     output.close
   }
